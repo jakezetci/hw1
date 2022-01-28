@@ -1,0 +1,32 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: O3
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    name: Check ozon.py
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install requirements
+      run: pip install scipy matplotlib
+    - name: Prepare testing datafile
+      run: cp .github/workflows/miniMSR-2.nc MSR-2.nc
+    - name: Try ozon.py 
+      run: python ozon.py 18.96 69.66
+    - name: Check ozon.png
+      run: test -e ./ozon.png
+    - name: Check ozon.json
+      run: python ./.github/workflows/check.py ./ozon.json

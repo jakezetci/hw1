@@ -62,20 +62,20 @@ if __name__ == "__main__":
         if data < mini[2]:
             mini[2] = data
         if (i % 12 == 0):
-            mean[1] += data
-            dots[1].append(dot)
-            if data > maxi[1]:
-                maxi[1] = data
-            if data < mini[1]:
-                mini[1] = data
-                
-        elif (i % 12 == 5):
             mean[0] += data
             dots[0].append(dot)
             if data > maxi[0]:
                 maxi[0] = data
             if data < mini[0]:
                 mini[0] = data
+                
+        elif (i % 12 == 5):
+            mean[1] += data
+            dots[1].append(dot)
+            if data > maxi[1]:
+                maxi[1] = data
+            if data < mini[1]:
+                mini[1] = data
     mean[2] = int(mean[2])/504
     mean[1] = int(mean[1])/42
     mean[0] = int(mean[0])/42

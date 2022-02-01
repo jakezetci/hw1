@@ -8,17 +8,35 @@ import argparse
 from geopy.geocoders import Nominatim
 
 
+"""
+for getting proper labels for countries with non-Latin-Cyrillic-Arabic alphabet
+you might need a non-default matplotlib font
+for easier tests i didn't ask it to import any - you might get runtime errors
+"""
+
+
 def location_city(location):
-    village_KEYS = ['city', 'town', 'village', 'hamlet']
-    
+    """
+    shortens the location.address to just city/village + country
+    :param location: your location with location.raw["address]
+    :type location: location.Location
+    :return: short format of an address or None is there is no address
+    :rtype: str
+
+    """
+    village_KEYS = ['city', 'town', 'village', 'hamlet', 'municipality']
     addr_dict = location.raw["address"]
     for key in village_KEYS:
         if key in addr_dict:
-            return ("".join([addr_dict["country"],", ",addr_dict[key]]))
+            return ("".join([addr_dict["country"], ", ", addr_dict[key]]))
+    if 'locality' in addr_dict:
+        return (addr_dict['locality'])
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('pos', metavar='POS', type=str, help='Position, location name or "longitude  latitude"', default = None, nargs = '*')
+parser.add_argument('pos', metavar='POS', type=str,
+                    help='Position, location name or "longitude  latitude"',
+                    default=None, nargs='*')
 args = parser.parse_args()
 if len(args.pos) == 1:
     loc = args.pos
@@ -27,13 +45,15 @@ if len(args.pos) == 1:
     latitude = location.latitude
     longitude = location.longitude
     a = " ".join(str(e) for e in [latitude, longitude])
-#такой некрасивый переворот происходит из-за неоднозначности geopy, иначе он не даст нужного location.raw
+    # такой некрасивый переворот происходит из-за неоднозначности geopy,
+    # иначе он не даст нужного location.raw
     location = geolocator.reverse(a)
 elif len(args.pos) == 2:
     longitude = float(args.pos[0])
     latitude = float(args.pos[1])
     geolocator = Nominatim(user_agent="Ozone Stuff")
-    a = " ".join(str(e) for e in args.pos[::-1]) #приходится реверсить потому что в задании зачем-то просят сначала подавать долготу
+    a = " ".join(str(e) for e in args.pos[::-1])
+    # приходится реверсить потому что в задании просят сначала подавать долготу
     location = geolocator.reverse(a)
 else:
     print("wrong format")
@@ -43,17 +63,18 @@ if __name__ == "__main__":
     f = netcdf.netcdf_file('MSR-2.nc', 'r', mmap=False)
     variables = f.variables
     n_of_months = variables['time'].shape[0]
+    # ближайшие подходящие координаты
     lat_index = np.searchsorted(variables['latitude'].data, latitude)
     lon_index = np.searchsorted(variables['longitude'].data, longitude)
     d = {}
-    d["coordinates"] = [longitude,latitude]
-    maxi = np.zeros(3)# массивы для хранения данных под словарь
-    mini = np.asarray([1e10,1e10,1e10])
+    d["coordinates"] = [longitude, latitude]
+    maxi = np.zeros(3)  # массивы для хранения данных под словарь
+    mini = np.asarray([1e10, 1e10, 1e10])
     mean = np.zeros(3)
-    names = ['jan','jul','all']#интересующая нас дата 
-    dots = [[],[],[]] #массив для создания точек
-    for i in range (int(n_of_months)):
-        data = variables['Average_O3_column'][i,lat_index,lon_index].copy()
+    names = ['jan', 'jul', 'all']  # интересующая нас дата
+    dots = [[], [], []]  # массив для создания точек под графики
+    for i in range(int(n_of_months)):
+        data = variables['Average_O3_column'][i, lat_index, lon_index].copy()
         dot = (data, 1979+i/12)
         mean[2] += data
         dots[2].append(dot)
@@ -68,7 +89,6 @@ if __name__ == "__main__":
                 maxi[0] = data
             if data < mini[0]:
                 mini[0] = data
-                
         elif (i % 12 == 5):
             mean[1] += data
             dots[1].append(dot)
@@ -76,18 +96,18 @@ if __name__ == "__main__":
                 maxi[1] = data
             if data < mini[1]:
                 mini[1] = data
-    mean[2] = int(mean[2])/504
-    mean[1] = int(mean[1])/42
-    mean[0] = int(mean[0])/42
-    for k in range(3):
+    mean[2] = float(mean[2])/n_of_months
+    mean[1] = float(mean[1])*12/n_of_months
+    mean[0] = float(mean[0])*12/n_of_months
+    for k in range(len(names)):
         d[names[k]] = {
-            'min':int(mini[k]),
-            'max':int(maxi[k]),
-            'mean':mean[k]}
-    
-    with open('ozon.json', 'w') as f:   
-            json.dump(d, f)
+            'min': float(mini[k]),
+            'max': float(maxi[k]),
+            'mean': mean[k]}
+    with open('ozon.json', 'w') as f:
+        json.dump(d, f)
 
+    """построение графиков"""
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.spines['bottom'].set_position(['axes', 0.0])
@@ -100,17 +120,16 @@ if __name__ == "__main__":
     january = np.transpose(dots[0])
     july = np.transpose(dots[1])
     overall = np.transpose(dots[2])
-    a, = plt.plot(january[1],january[0],'b', ls='--')
-    b, = plt.plot(july[1], july[0], 'g', ls='--')
-    c, = plt.plot(overall[1], overall[0], 'r', lw=0.4)
-    a.set_label('january')
-    b.set_label('july')
-    c.set_label('all data')
-    if location is not None:
-        d, = plt.plot([],[], 'o')
+    jan_plot, = plt.plot(january[1], january[0], 'b', ls='--')
+    jul_plot, = plt.plot(july[1], july[0], 'g', ls='--')
+    all_plot, = plt.plot(overall[1], overall[0], 'r', lw=0.4)
+    jan_plot.set_label('january')
+    jul_plot.set_label('july')
+    all_plot.set_label('all data')
+    if location is not None:  # предотвращает случаи поиска селения в океане
+        d, = plt.plot([], [], 'o')
         c = location.address
         b = location
         d.set_label(location_city(location))
     ax.legend()
     plt.savefig('ozon.png')
-    

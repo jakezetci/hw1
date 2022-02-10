@@ -6,7 +6,15 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib
 import argparse
-from geopy.geocoders import Nominatim
+
+import os
+
+try:
+    from geopy.geocoders import Nominatim
+
+except ImportError:
+    os.system('pip3 install geopy')
+    from geopy.geocoders import Nominatim
 
 
 def is_float(element):

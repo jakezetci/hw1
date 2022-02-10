@@ -70,10 +70,12 @@ def location_city(location):
     for key in village_KEYS:
         if key in addr_dict:
             return ("".join([addr_dict["country"], ", ", addr_dict[key]]))
-    if 'country' in addr_dict:
+    if 'locality' in addr_dict and 'country' in addr_dict:
+        return("".join([addr_dict["country"], ", ", addr_dict['locality']]))
+    elif 'country' in addr_dict:
         return(addr_dict['country'])
     elif 'locality' in addr_dict:
-        return (addr_dict['locality'])
+        return(addr_dict['locality'])
     else:
         latitude = addr_dict['lat']
         longitude = addr_dict['lon']

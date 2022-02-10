@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 maxi[0] = data
             if data < mini[0]:
                 mini[0] = data
-        elif (i % 12 == 5):
+        elif (i % 12 == 6):
             mean[1] += data
             dots[1].append(dot)
             if data > maxi[1]:

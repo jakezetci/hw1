@@ -6,7 +6,6 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib
 import argparse
-from geopy.geocoders import Nominatim
 
 
 def is_float(element):

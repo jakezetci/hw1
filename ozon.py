@@ -17,92 +17,17 @@ def is_float(element):
         return False
 
 
-def location_font(location):
-    """
-    finds the appropriate font for your location
-    :param location: your location
-    :type location: location.Location
-    :return: fontstyle
-    :rtype: matplotlib.font_manager.FontProperties
-
-    """
-    style = matplotlib.font_manager.FontProperties()
-    style.set_size('xx-large')
-    style.set_family(['Calibri', 'Helvetica', 'Arial', 'serif'])
-    addr_dict = location.raw["address"]
-    keys = ['jp', 'cn', 'kr', 'kp', 'mm', 'mn', 'th']
-    countries_dict = {
-        'cn': "SimSun",
-        'th': "Leelawadee UI",
-        'kr': 'Malgun Gothic',
-        'jp': 'MS Gothic',
-        'kp': 'Malgun Gothic',
-        'mm': "Myanmar Text",
-        'mn': "Mongolian Baiti"
-                     }  # не панацея, но кажется, это все языки вне Calibri
-    code = addr_dict["country_code"]
-    if code in keys:
-        style.set_family([countries_dict[code],
-                         'Calibri', 'Helvetica', 'Arial', 'serif'])
-    return style
-#  вообще проблему языков и шрифтов должен решать familyfont, а не моя функция
-#  но матплотлиб его использует лишь для проверки существования шрифта в целом,
-#  а не каждого глифа
-
-#  а, и ещё надо бы создать для каждого языка целую семью шрифтов, но мне лень
-#  если у вас не нашлось этого шрифта на компе - простите уж, могу поправить
-
-
-def location_city(location):
-    """
-    shortens the location.address to just city/village + country
-    :param location: your location with location.raw["address"]
-    :type location: location.Location
-    :return: short format of an address or None if there is no address
-    :rtype: str
-
-    """
-    village_KEYS = ['city', 'town', 'village', 'hamlet', 'municipality']
-    addr_dict = location.raw["address"]
-    for key in village_KEYS:
-        if key in addr_dict:
-            return ("".join([addr_dict["country"], ", ", addr_dict[key]]))
-    if 'country' in addr_dict:
-        return(addr_dict['country'])
-    elif 'locality' in addr_dict:
-        return (addr_dict['locality'])
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('pos', metavar='POS', type=str,
                     help='Position: location name or "longitude  latitude"',
                     default=None, nargs='*')
 args = parser.parse_args()
 
-if is_float(args.pos[0]):
+if is_float(args.pos[0]) and is_float(args.pos[1]):
     if len(args.pos) != 2:
         raise NotImplementedError("wrong format")
     longitude = float(args.pos[0])
     latitude = float(args.pos[1])
-    geolocator = Nominatim(user_agent="Ozone Stuff")
-    a = " ".join(str(e) for e in args.pos[::-1])
-    # приходится реверсить потому что в задании просят сначала подавать долготу
-    location = geolocator.reverse(a)
-else:
-    if len(args.pos) == 1:
-        loc = args.pos
-    else:
-        loc = " ".join(str(e) for e in args.pos)
-    geolocator = Nominatim(user_agent="Ozone Stuff")
-    location = geolocator.geocode(loc)
-    if location is None:
-        raise NotImplementedError("wrong format")
-    latitude = location.latitude
-    longitude = location.longitude
-    a = " ".join(str(e) for e in [latitude, longitude])
-    # такой некрасивый переворот происходит из-за неоднозначности geopy,
-    # иначе он не даст нужного location.raw
-    location = geolocator.reverse(a)
 
 
 if __name__ == "__main__":
@@ -174,10 +99,6 @@ if __name__ == "__main__":
     jan_plot.set_label('ozone level during january')
     jul_plot.set_label('ozone level during july')
     all_plot.set_label('ozone level throughout the years')
-    if location is not None:  # предотвращает случаи поиска селения в океане
-        d, = plt.plot([], [], 'o')
-        d.set_label(location_city(location))
-        style = location_font(location)
     ax.set_ylim([mini[2]-5.0, maxi[2]+5.0])
-    ax.legend(loc='best', prop=style)
+    ax.legend(loc='best')
     plt.savefig('ozon.png')

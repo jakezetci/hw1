@@ -40,7 +40,10 @@ def location_font(location):
         'mm': "Myanmar Text",
         'mn': "Mongolian Baiti"
                      }  # не панацея, но кажется, это все языки вне Calibri
-    code = addr_dict["country_code"]
+    if 'country_code' in addr_dict:
+        code = addr_dict['country_code']
+    else:
+        return style
     if code in keys:
         style.set_family([countries_dict[code],
                          'Calibri', 'Helvetica', 'Arial', 'serif'])
